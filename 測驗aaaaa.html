@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>遊樂園購票嚮導byCHATGPTの力</title>
+<style>
+body { display: flex;
+  flex-direction: column; /* 上下排列 */
+  align-items: center;    /* 水平置中 */
+  font-family: Arial, sans-serif;
+  margin: 20px; }
+.question { margin: 20px 0; }
+.options button, .option-btn {
+  margin: 5px; padding: 10px 15px;
+  border: none; border-radius: 5px;
+  background-color: #3498db; color: white;
+  cursor: pointer;
+}
+.question img {
+  width: 150px; border-radius: 10px; cursor: pointer; display: block; margin-bottom: 5px;
+}
+.selected { outline:3px solid #f1c40f; }
+.hidden { display: none; }
+input[type=number] { width: 60px; margin-left: 5px; }
+
+</style>
+</head>
+<body>
+
+<h1 id="title">🎢 遊樂園購票嚮導byCHATGPTの力</h1>
+
+<!-- 語言選擇 -->
+<div class="question">
+  <label for="langSelect"><b>🌐 日本語/ Language /語言/ ภาษา :</b></label>
+  <select id="langSelect">
+　<option value="ja">日本語</option>
+　<option value="en">English</option>
+    <option value="zh">中文</option>
+    <option value="th">ไทย</option>
+    
+  </select>
+</div>
+
+<!-- 第一題 -->
+<div id="q1" class="question">
+  <p id="q1-text"></p>
+  <div style="display:flex; gap:20px;">
+    <div style="text-align:center;" class="q1-option">
+      <img src="yes.png" alt="平日">
+      <button class="option-btn" data-key="weekday" onclick="selectOption(1,'weekday')"></button>
+    </div>
+    <div style="text-align:center;" class="q1-option">
+      <img src="no.png" alt="假日">
+      <button class="option-btn" data-key="holiday" onclick="selectOption(1,'holiday')"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 第二題 -->
+<div id="q2" class="question hidden">
+  <p id="q2-text"></p>
+  <div style="display:flex; gap:20px;">
+    <div style="text-align:center;" class="q2-option">
+      <img src="thrill.png" alt="刺激">
+      <button class="option-btn" data-key="thrill" onclick="selectOption(2,'thrill')"></button>
+    </div>
+    <div style="text-align:center;" class="q2-option">
+      <img src="relax.png" alt="休閒">
+      <button class="option-btn" data-key="relax" onclick="selectOption(2,'relax')"></button>
+    </div>
+  </div>
+</div>
+
+<!-- 第三題 -->
+<div id="q3" class="question hidden">
+  <p id="q3-text"></p>
+  <label id="adultLabel"></label>
+  <input type="number" id="adults" min="0" value="0">
+  <label id="childLabel"></label>
+  <input type="number" id="children" min="0" value="0">
+  <label id="infantLabel"></label>
+  <input type="number" id="infants" min="0" value="0">
+</div>
+
+<!-- 第四題 -->
+<div id="q4" class="question hidden">
+  <p id="q4-text"></p>
+  <div class="options" id="ticketOptions"></div>
+</div>
+
+<!-- 推薦 -->
+<div id="result" class="question hidden">
+  <h2 id="result-text"></h2>
+  <p id="ticketSummary"></p>
+</div>
+
+<!-- 重新開始按鈕 -->
+<div class="question">
+ <button id="restartBtn" 
+        style="background-color:#C9C9C9;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;" 
+        onclick="restart()">
+</button>
+</div>
+
+<script>
+const langData = {
+  zh: {
+    title:"🎢 遊樂園購票嚮導", q1:"1️⃣ 請選擇來園日：", q2:"2️⃣ 請選擇遊玩風格：", q3:"3️⃣ 請輸入人數：", q4:"4️⃣ 請選擇票券種類：",
+    adult:"大人", child:"小孩", infant:"未就學幼兒", result:"🎟️ 推薦購買：",
+    q1Options:{weekday:"平日", holiday:"假日"}, q2Options:{thrill:"刺激", relax:"休閒"}, restart:"🔄 重新開始",
+    tickets:{
+      weekday_thrill:["Weekday-A Ticket","Weekday-B Ticket","Weekday-C Ticket"],
+      holiday_thrill:["A Ticket","B Ticket","C Ticket"],
+      weekday_relax:["Weekday-X Ticket","Weekday-Y Ticket","Weekday-Z Ticket"],
+      holiday_relax:["X Ticket","Y Ticket","Z Ticket"]
+    },
+    ticketNames:{
+      "Weekday-A Ticket":"平日-A券","Weekday-B Ticket":"平日-B券","Weekday-C Ticket":"平日-C券",
+      "A Ticket":"A券","B Ticket":"B券","C Ticket":"C券",
+      "Weekday-X Ticket":"平日-X券","Weekday-Y Ticket":"平日-Y券","Weekday-Z Ticket":"平日-Z券",
+      "X Ticket":"X券","Y Ticket":"Y券","Z Ticket":"Z券"
+    }
+  },
+  en: {
+    title:"🎢 Theme Park Ticket Guide", q1:"1️⃣ Choose visiting day:", q2:"2️⃣ Choose play style:", q3:"3️⃣ Enter number of people:", q4:"4️⃣ Choose ticket type:",
+    adult:"Adult", child:"Child", infant:"Infant", result:"🎟️ Recommended tickets:",
+    q1Options:{weekday:"Weekday", holiday:"Holiday"}, q2Options:{thrill:"Thrill", relax:"Relax"}, restart:"🔄 Restart",
+    tickets:{
+      weekday_thrill:["Weekday-A Ticket","Weekday-B Ticket","Weekday-C Ticket"],
+      holiday_thrill:["A Ticket","B Ticket","C Ticket"],
+      weekday_relax:["Weekday-X Ticket","Weekday-Y Ticket","Weekday-Z Ticket"],
+      holiday_relax:["X Ticket","Y Ticket","Z Ticket"]
+    },
+    ticketNames:{
+      "Weekday-A Ticket":"Weekday-A Ticket","Weekday-B Ticket":"Weekday-B Ticket","Weekday-C Ticket":"Weekday-C Ticket",
+      "A Ticket":"A Ticket","B Ticket":"B Ticket","C Ticket":"C Ticket",
+      "Weekday-X Ticket":"Weekday-X Ticket","Weekday-Y Ticket":"Weekday-Y Ticket","Weekday-Z Ticket":"Weekday-Z Ticket",
+      "X Ticket":"X Ticket","Y Ticket":"Y Ticket","Z Ticket":"Z Ticket"
+    }
+  },
+  th: {
+    title:"🎢 คู่มือซื้อตั๋วสวนสนุก", q1:"1️⃣ เลือกวันเข้าชม:", q2:"2️⃣ เลือกรูปแบบการเล่น:", q3:"3️⃣ ใส่จำนวนคน:", q4:"4️⃣ เลือกประเภทตั๋ว:",
+    adult:"ผู้ใหญ่", child:"เด็ก", infant:"เด็กเล็ก", result:"🎟️ แนะนำการซื้อตั๋ว:",
+    q1Options:{weekday:"วันธรรมดา", holiday:"วันหยุด"}, q2Options:{thrill:"ตื่นเต้น", relax:"สบาย"}, restart:"🔄 เริ่มใหม่",
+    tickets:{
+      weekday_thrill:["Weekday-A Ticket","Weekday-B Ticket","Weekday-C Ticket"],
+      holiday_thrill:["A Ticket","B Ticket","C Ticket"],
+      weekday_relax:["Weekday-X Ticket","Weekday-Y Ticket","Weekday-Z Ticket"],
+      holiday_relax:["X Ticket","Y Ticket","Z Ticket"]
+    },
+    ticketNames:{
+      "Weekday-A Ticket":"วันธรรมดา-A","Weekday-B Ticket":"วันธรรมดา-B","Weekday-C Ticket":"วันธรรมดา-C",
+      "A Ticket":"A","B Ticket":"B","C Ticket":"C",
+      "Weekday-X Ticket":"วันธรรมดา-X","Weekday-Y Ticket":"วันธรรมดา-Y","Weekday-Z Ticket":"วันธรรมดา-Z",
+      "X Ticket":"X","Y Ticket":"Y","Z Ticket":"Z"
+    }
+  },
+  ja: {
+    title:"🎢 遊園地チケットガイド", q1:"1️⃣ 来園日を選択してください：", q2:"2️⃣ 遊びスタイルを選択してください：", q3:"3️⃣ 人数を入力してください：", q4:"4️⃣ チケット種類を選択してください：",
+    adult:"大人", child:"子供", infant:"未就学児", result:"🎟️ 推奨チケット：",
+    q1Options:{weekday:"平日", holiday:"休日"}, q2Options:{thrill:"スリル", relax:"リラックス"}, restart:"🔄 やり直し",
+    tickets:{
+      weekday_thrill:["Weekday-A Ticket","Weekday-B Ticket","Weekday-C Ticket"],
+      holiday_thrill:["A Ticket","B Ticket","C Ticket"],
+      weekday_relax:["Weekday-X Ticket","Weekday-Y Ticket","Weekday-Z Ticket"],
+      holiday_relax:["X Ticket","Y Ticket","Z Ticket"]
+    },
+    ticketNames:{
+      "Weekday-A Ticket":"平日-A券","Weekday-B Ticket":"平日-B券","Weekday-C Ticket":"平日-C券",
+      "A Ticket":"A券","B Ticket":"B券","C Ticket":"C券",
+      "Weekday-X Ticket":"平日-X券","Weekday-Y Ticket":"平日-Y券","Weekday-Z Ticket":"平日-Z券",
+      "X Ticket":"X券","Y Ticket":"Y券","Z Ticket":"Z券"
+    }
+  }
+};
+
+let answers={q1:null,q2:null,q4:null}, currentLang="ja";
+
+function selectOption(q, value){
+  answers[`q${q}`]=value;
+  document.querySelectorAll(`#q${q} .option-btn`).forEach(b=>b.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+  if(q===1){document.getElementById("q2").classList.remove("hidden"); hideFrom(2);}
+  else if(q===2){document.getElementById("q3").classList.remove("hidden"); hideFrom(3); loadTickets();}
+  else if(q===4){showResult();}
+}
+
+function hideFrom(start){for(let i=start+1;i<=4;i++){document.getElementById(`q${i}`).classList.add("hidden"); if(i===4) document.getElementById("result").classList.add("hidden");}}
+
+function loadTickets(){
+  if(!answers.q1||!answers.q2) return;
+  let type=answers.q1+"_"+answers.q2;
+  let tickets=langData["en"].tickets[type];
+  let container=document.getElementById("ticketOptions");
+  container.innerHTML="";
+  tickets.forEach(tKey=>{
+    let btn=document.createElement("button");
+    btn.textContent=langData[currentLang].ticketNames[tKey];
+    btn.className="option-btn";
+    btn.onclick=()=>{ selectOption(4,tKey); };
+    container.appendChild(btn);
+  });
+  document.getElementById("q4").classList.remove("hidden");
+}
+
+function showResult(){
+  let adults=parseInt(document.getElementById("adults").value)||0;
+  let children=parseInt(document.getElementById("children").value)||0;
+  let infants=parseInt(document.getElementById("infants").value)||0;
+  document.getElementById("result").classList.remove("hidden");
+
+  let tName=answers.q4;
+  let resultHTML="";
+  if(currentLang==="ja"){
+    resultHTML=`<p>${langData["ja"].adult}: ${adults}, ${langData["ja"].child}: ${children}, ${langData["ja"].infant}: ${infants} → ${langData["ja"].ticketNames[tName]}</p>`;
+  } else {
+    resultHTML=`<p>${langData[currentLang].adult}: ${adults}, ${langData[currentLang].child}: ${children}, ${langData[currentLang].infant}: ${infants} → ${langData[currentLang].ticketNames[tName]}</p>`+
+               `<p>日本語: ${langData["ja"].adult}: ${adults}, ${langData["ja"].child}: ${children}, ${langData["ja"].infant}: ${infants} → ${langData["ja"].ticketNames[tName]}</p>`;
+  }
+  document.getElementById("ticketSummary").innerHTML=resultHTML;
+}
+
+function updateUI(){
+  let t=langData[currentLang];
+  document.getElementById("title").textContent=t.title;
+  document.getElementById("q1-text").textContent=t.q1;
+  document.getElementById("q2-text").textContent=t.q2;
+  document.getElementById("q3-text").textContent=t.q3;
+  document.getElementById("q4-text").textContent=t.q4;
+  document.getElementById("adultLabel").textContent=t.adult+":";
+  document.getElementById("childLabel").textContent=t.child+":";
+  document.getElementById("infantLabel").textContent=t.infant+":";
+  document.getElementById("result-text").textContent=t.result;
+
+  // 更新按鈕
+  document.querySelectorAll('#q1 .option-btn').forEach(b=>b.textContent=t.q1Options[b.dataset.key]);
+  document.querySelectorAll('#q2 .option-btn').forEach(b=>b.textContent=t.q2Options[b.dataset.key]);
+  document.getElementById("restartBtn").textContent=t.restart;
+
+  if(answers.q1&&answers.q2){loadTickets();}
+}
+
+document.getElementById("langSelect").addEventListener("change", function(){
+  currentLang=this.value;
+  updateUI();
+});
+
+// 圖片點擊觸發按鈕
+document.querySelectorAll('#q1 .q1-option img').forEach(img=>{img.addEventListener('click',function(){this.nextElementSibling.click();});});
+document.querySelectorAll('#q2 .q2-option img').forEach(img=>{img.addEventListener('click',function(){this.nextElementSibling.click();});});
+
+function restart(){
+  answers={q1:null,q2:null,q4:null};
+//  currentLang="zh";
+ // document.getElementById("langSelect").value="zh";
+  document.getElementById("adults").value=0;
+  document.getElementById("children").value=0;
+  document.getElementById("infants").value=0;
+  document.querySelectorAll(".option-btn").forEach(b=>b.classList.remove("selected"));
+  document.getElementById("q1").classList.remove("hidden");
+  document.getElementById("q2").classList.add("hidden");
+  document.getElementById("q3").classList.add("hidden");
+  document.getElementById("q4").classList.add("hidden");
+  document.getElementById("result").classList.add("hidden");
+  updateUI();
+}
+
+updateUI();
+</script>
+
+</body>
+</html>
