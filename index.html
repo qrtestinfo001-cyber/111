@@ -8,9 +8,10 @@
 body { display: flex;
   flex-direction: column; /* 上下排列 */
   align-items: center;    /* 水平置中 */
-  transform: scale(1.2);       /* 放大 2 倍 */
-  transform-origin: top left; /* 從左上角開始放大 */
-  width: 83.3%;                 /* 放大後補償寬度 */
+  transform: scale(1.2);        /* 放大 1.2 倍 */
+  transform-origin: center top; /* 從中間上方開始縮放 */
+  width: 83.3%;                 /* 防止內容超出畫面 */
+  margin: 0 auto;               /* 置中 */
   font-family: Arial, sans-serif;
   margin: 20px; }
 .question { margin: 20px 0; }
@@ -274,6 +275,7 @@ updateUI();
 
 </body>
 </html>
+
 
 
 
